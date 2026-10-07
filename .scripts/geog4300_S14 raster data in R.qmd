@@ -20,7 +20,7 @@ library(tidycensus)
 library(FedData)
 library(tmap)
 
-seattle<-st_read("data/tl_2025_us_uac20.gpkg") %>%
+seattle<-st_read("geog4300_datascience/data/tl_2025_us_uac20.gpkg") %>%
   filter(str_detect(NAME20,"Seattle")) %>%
   select(NAME20) %>%
   st_transform(4326)
@@ -28,7 +28,7 @@ seattle<-st_read("data/tl_2025_us_uac20.gpkg") %>%
 nlcd_legend <- pal_nlcd() %>%
   mutate(ID=as.character(ID))
 
-nlcd25_raw<-rast("data/nlcd_2025_seattle.tif")
+nlcd25_raw<-rast("geog4300_datascience/data/nlcd_2025_seattle.tif")
 plot(nlcd25_raw,col=nlcd_legend$Color)
 
 #Change the data to factor/character rather than numeric values
@@ -201,15 +201,18 @@ Since rasters are (under the hood) a numeric matrix, we can also do math with th
 When multiple rasters share the same extent and resolution, terra stores them as a multilayer raster object. Each layer might represent a different time period, variable, or observation. Here, we use list.files, to identify files from two July time ranges: 1950-52 and 2022-24. We then load them at once using the `rast` function from terra.
 
 ```{r}
-temp1950_files<-list.files("data/era5_temperature/temp_july1950_1952",
+temp1950_files<-list.files("geog4300_datascience/data/era5_temperature/temp_july1950_1952",
                      pattern=".tif",
-                     full.names=T)
+                     full.names=T) #list files just lets you see all the files out especially if you type it into the comand box
 
 temp_1950<-rast(temp1950_files)
 
-temp2022_files<-list.files("data/era5_temperature/temp_july2022_2024",
+temp2022_files<-list.files("geog4300_datascience/data/era5_temperature/temp_july2022_2024",
                      pattern=".tif",
-                     full.names=T)
+                     full.names=T)#=T is equivalent to =true
+
+test<-rast(temp1950_files[1])#this is just reading the first file of the thing
+plot(test)
 
 temp_2022<-rast(temp2022_files)
 ```
@@ -235,7 +238,7 @@ You can see this by using `plot`.
 
 ```{r}
 plot(mean(temp_1950))
-plot(median(temp_1950))
+plot(median(temp_1950))#if these line up, you can matrix algebra. Its more or less just every box correlates to a data set at the equivalent location. 
 ```
 
 Beyond that, you can also do math to compare layers, subtracting one from another.
@@ -253,7 +256,13 @@ plot(mean_compare)
 These temperatures are measured in Kelvin. To convert Kelvin to Celsius, subtract 273.15. Do math on the mean 2022 dataset to convert those temperatures to Celsius and plot them. Then try converting to Fahrenheit (you'll need to look up the formula.)
 
 ```{r}
-
+Celcius_2022<-mean_2022-273.15
+  summary(Celcius_2022)
+  
+  
+Farenheit_2022<-Celcius_2022*1.8+32
+summary(Farenheit_2022)
+  
 ```
 
 ## Try this, too!
@@ -261,6 +270,19 @@ These temperatures are measured in Kelvin. To convert Kelvin to Celsius, subtrac
 Use your AI system of choice to create a more developed version of the `mean_compare` map using ggplot or tmap. The map should include a title and meaningful legend. You can also ask for suggestions on the most suitable color scheme.
 
 ```{r}
+summary(mean_compare)
+library(tidyverse)
 
+
+tm_shape(mean_compare) +
+  tm_raster(
+    col.scale = tm_scale_continuous(
+      values = "magma"
+    ),
+    col.legend = tm_legend(
+      title = "Temperature difference (K)"
+    )
+  ) +
+  tm_title("Mean Temperature Difference, 1950–2022")
 ```
 
